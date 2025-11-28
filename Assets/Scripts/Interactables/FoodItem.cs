@@ -4,6 +4,7 @@ public class FoodItem : MonoBehaviour
 {
     [Header("Configuración de Comida")]
     public float energyRestore = 25f;
+    [Range(0f, 1f)] public float poisonChance = 0.2f; // probabilidad de estar envenenada
 
     [Header("Efectos")]
     public GameObject collectionEffect;
@@ -18,29 +19,20 @@ public class FoodItem : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         foodCollider = GetComponent<Collider2D>();
 
-        // Asegurar que tenga tag
         gameObject.tag = "Food";
 
-        // Configurar collider como trigger si no lo está
         if (foodCollider != null)
-        {
             foodCollider.isTrigger = true;
-        }
         else
-        {
             Debug.LogError("No hay Collider2D en la comida: " + gameObject.name);
-        }
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
         if (isCollected) return;
 
-        Debug.Log("Trigger entered with: " + other.gameObject.name);
-
         if (other.CompareTag("Player"))
         {
-            Debug.Log("Player detectado, intentando recoger comida...");
             CollectFood(other.gameObject);
         }
     }
@@ -48,25 +40,30 @@ public class FoodItem : MonoBehaviour
     void CollectFood(GameObject player)
     {
         if (isCollected) return;
-
         isCollected = true;
 
         PlayerEnergy playerEnergy = player.GetComponent<PlayerEnergy>();
         if (playerEnergy != null)
         {
-            Debug.Log("PlayerEnergy encontrado, agregando energía: " + energyRestore);
-            playerEnergy.AddEnergy(energyRestore);
+            bool isPoisoned = Random.value < poisonChance;
 
-            // Efectos visuales y de sonido
+            if (isPoisoned)
+            {
+                playerEnergy.currentEnergy -= energyRestore; // le resta energía
+                playerEnergy.currentEnergy = Mathf.Clamp(playerEnergy.currentEnergy, 0, playerEnergy.maxEnergy);
+                Debug.Log($"¡Comida envenenada! Pierdes {energyRestore} de energía.");
+            }
+            else
+            {
+                playerEnergy.AddEnergy(energyRestore); // suma energía normalmente
+                Debug.Log($"Comida buena! Recuperas {energyRestore} de energía.");
+            }
+
             PlayCollectionEffects();
 
-            // Ocultar comida inmediatamente
-            if (spriteRenderer != null)
-                spriteRenderer.enabled = false;
-            if (foodCollider != null)
-                foodCollider.enabled = false;
+            if (spriteRenderer != null) spriteRenderer.enabled = false;
+            if (foodCollider != null) foodCollider.enabled = false;
 
-            // Destruir después de un tiempo
             Destroy(gameObject, 2f);
         }
         else
@@ -77,16 +74,10 @@ public class FoodItem : MonoBehaviour
 
     void PlayCollectionEffects()
     {
-        // Efecto de partículas
         if (collectionEffect != null)
-        {
             Instantiate(collectionEffect, transform.position, Quaternion.identity);
-        }
 
-        // Sonido
         if (collectionSound != null)
-        {
             AudioSource.PlayClipAtPoint(collectionSound, transform.position);
-        }
     }
 }

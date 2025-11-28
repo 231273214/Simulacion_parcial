@@ -1,56 +1,38 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
 
 public class WeaponInventory : MonoBehaviour
 {
     public List<WeaponData> weapons = new List<WeaponData>();
-    public List<WeaponShooter> weaponObjects = new List<WeaponShooter>();
     public int currentWeaponIndex = 0;
 
-    [Header("Plantillas")]
-    public WeaponData[] weaponTemplates;
+    [Header("UI")]
+    public Image[] weaponSlots;
+    public Color selectedColor = Color.yellow;
+    public Color normalColor = Color.white;
+    public Text ammoText;
+    public Text weaponNameText;
+    public SpriteRenderer weaponSpriteRenderer;
+
+    public WeaponShooter shooterPrefab;
+    private WeaponShooter currentShooter;
 
     public WeaponData CurrentWeapon => weapons.Count > 0 ? weapons[currentWeaponIndex] : null;
-    public WeaponShooter CurrentShooter => weaponObjects.Count > 0 ? weaponObjects[currentWeaponIndex] : null;
+    public WeaponShooter CurrentShooter => currentShooter;
 
-    // =============================================================
-    public void AddWeapon(
-        WeaponType type,
-        Sprite weaponSprite,
-        Sprite weaponUISprite,
-        AudioClip shootSound,
-        AudioClip reloadSound,
-        GameObject projectilePrefab)
+    void Start()
     {
-        // Permitir múltiples armas, no borrar las anteriores
-        WeaponData template = CreateWeaponByType(type);
-        if (template == null)
-        {
-            Debug.LogError("No existe plantilla para " + type);
-            return;
-        }
+        if (weapons.Count > 0)
+            EquipWeapon(0);
+    }
 
-        template.weaponSprite = weaponSprite;
-        template.weaponUISprite = weaponUISprite;
-        template.shootSound = shootSound;
-        template.reloadSound = reloadSound;
-        template.projectilePrefab = projectilePrefab;
+    public void AddWeapon(WeaponData newWeapon)
+    {
+        if (weapons.Exists(w => w.type == newWeapon.type)) return;
+        weapons.Add(newWeapon);
+        UpdateInventoryUI();
 
-        // Munición infinita
-        template.maxAmmo = -1;
-        template.currentAmmo = 9999;
-
-        // Añadir a inventario
-        weapons.Add(template);
-
-        GameObject shooterObj = new GameObject(type.ToString() + "_Shooter");
-        shooterObj.transform.SetParent(this.transform);
-        WeaponShooter shooter = shooterObj.AddComponent<WeaponShooter>();
-        shooter.SetWeaponData(template);
-        shooterObj.SetActive(false);
-        weaponObjects.Add(shooter);
-
-        // Si es la primera arma recogida, equiparla
         if (weapons.Count == 1)
             EquipWeapon(0);
     }
@@ -59,35 +41,52 @@ public class WeaponInventory : MonoBehaviour
     {
         if (weapons.Count == 0) return;
         index = Mathf.Clamp(index, 0, weapons.Count - 1);
-
-        for (int i = 0; i < weaponObjects.Count; i++)
-            weaponObjects[i].gameObject.SetActive(i == index);
-
         currentWeaponIndex = index;
+
+        if (currentShooter != null) Destroy(currentShooter.gameObject);
+
+        currentShooter = Instantiate(shooterPrefab, transform.position, Quaternion.identity, transform);
+        currentShooter.SetWeaponData(CurrentWeapon);
+
+        UpdateInventoryUI();
     }
 
     public void EquipNextWeapon()
     {
         if (weapons.Count == 0) return;
-        currentWeaponIndex = (currentWeaponIndex + 1) % weapons.Count;
-        EquipWeapon(currentWeaponIndex);
+        EquipWeapon((currentWeaponIndex + 1) % weapons.Count);
     }
 
     public void EquipPreviousWeapon()
     {
         if (weapons.Count == 0) return;
-        currentWeaponIndex--;
-        if (currentWeaponIndex < 0) currentWeaponIndex = weapons.Count - 1;
-        EquipWeapon(currentWeaponIndex);
+        int newIndex = currentWeaponIndex - 1;
+        if (newIndex < 0) newIndex = weapons.Count - 1;
+        EquipWeapon(newIndex);
     }
 
-    private WeaponData CreateWeaponByType(WeaponType type)
+    void UpdateInventoryUI()
     {
-        foreach (var t in weaponTemplates)
-            if (t.type == type)
-                return Instantiate(t);
+        for (int i = 0; i < weaponSlots.Length; i++)
+        {
+            if (i < weapons.Count)
+            {
+                weaponSlots[i].sprite = weapons[i].weaponUISprite;
+                weaponSlots[i].color = i == currentWeaponIndex ? selectedColor : normalColor;
+            }
+            else
+            {
+                weaponSlots[i].sprite = null;
+                weaponSlots[i].color = Color.gray;
+            }
+        }
 
-        return null;
+        if (CurrentWeapon != null)
+        {
+            ammoText.text = "?"; // Munición infinita
+            weaponNameText.text = CurrentWeapon.name;
+            if (weaponSpriteRenderer != null)
+                weaponSpriteRenderer.sprite = CurrentWeapon.weaponSprite;
+        }
     }
 }
-

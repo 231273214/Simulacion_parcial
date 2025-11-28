@@ -3,46 +3,39 @@ using UnityEngine.InputSystem;
 
 public class WeaponInputHandler : MonoBehaviour
 {
+    public static WeaponInputHandler Instance;
     private PlayerController controls;
-    private WeaponInventory weaponInventory;
-
-    private Vector2 aimDirection;
+    private Vector2 aimDir;
 
     void Awake()
     {
-        controls = new PlayerController();
-        weaponInventory = GetComponent<WeaponInventory>();
+        if (Instance == null) Instance = this;
 
-        // Disparo
+        controls = new PlayerController();
+
+        controls.Player.AimDirection.performed += ctx => aimDir = ctx.ReadValue<Vector2>();
         controls.Player.Shoot.performed += ctx =>
         {
-            if (weaponInventory.CurrentShooter != null)
-                weaponInventory.CurrentShooter.HandleShootInput();
+            WeaponInventory inv = GetComponent<WeaponInventory>();
+            inv?.CurrentShooter?.TryShoot();
         };
-
-        // Cambiar arma siguiente
         controls.Player.NextWeapon.performed += ctx =>
         {
-            weaponInventory.EquipNextWeapon();
+            WeaponInventory inv = GetComponent<WeaponInventory>();
+            inv?.EquipNextWeapon();
         };
-
-        // Cambiar arma anterior
         controls.Player.PreviousWeapon.performed += ctx =>
         {
-            weaponInventory.EquipPreviousWeapon();
-        };
-
-        // Dirección de apuntado (joystick derecho)
-        controls.Player.AimDirection.performed += ctx =>
-        {
-            aimDirection = ctx.ReadValue<Vector2>();
+            WeaponInventory inv = GetComponent<WeaponInventory>();
+            inv?.EquipPreviousWeapon();
         };
     }
 
     void OnEnable() => controls.Enable();
     void OnDisable() => controls.Disable();
 
-    public Vector2 GetAimDirection() => aimDirection;
+    public Vector2 GetAimDirection() => aimDir;
 }
+
 
 

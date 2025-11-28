@@ -209,7 +209,7 @@ MonoBehaviour:
   animator: {fileID: 5401650976683835918}
   damage: 10
   attackCooldown: 1
-  idleSound: {fileID: 0}
+  idleSound: {fileID: 8300000, guid: 30db5d73eb1d08342af0d5d3d5de3f5d, type: 3}
   chaseSound: {fileID: 0}
   attackSound: {fileID: 0}
   minSoundDelay: 3

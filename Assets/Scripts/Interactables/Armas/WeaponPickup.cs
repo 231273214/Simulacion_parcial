@@ -29,18 +29,6 @@ public class WeaponPickup : MonoBehaviour, IInteractable
             return;
         }
 
-        // Crear el arma y añadirla al inventario
-        playerInventory.AddWeapon(
-            weaponType,
-            weaponSprite,
-            weaponUISprite,
-            shootSound,
-            reloadSound,
-            projectilePrefab
-        );
-
-        Debug.Log($"Arma {weaponType} recogida.");
-
         // Destruir objeto del mundo
         Destroy(gameObject);
     }

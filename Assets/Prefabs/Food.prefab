@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2605818016177742058}
   - component: {fileID: 6108591611211749581}
-  - component: {fileID: 4699568569823367498}
   - component: {fileID: 7302157371623990887}
   - component: {fileID: 7338765006809737684}
   m_Layer: 0
@@ -93,21 +92,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &4699568569823367498
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1307919893382588031}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b2946853baf6824586cb64dbb619983, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FoodItem
-  energyRestore: 25
-  collectionEffect: {fileID: 0}
-  collectionSound: {fileID: 0}
 --- !u!114 &7302157371623990887
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -121,6 +105,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FoodItem
   energyRestore: 25
+  poisonChance: 0.3
   collectionEffect: {fileID: 0}
   collectionSound: {fileID: 0}
 --- !u!61 &7338765006809737684

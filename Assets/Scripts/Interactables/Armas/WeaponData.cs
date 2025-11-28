@@ -6,8 +6,6 @@ public class WeaponData : ScriptableObject
     public string name;
     public WeaponType type;
     public int damage;
-    public int maxAmmo;
-    public int currentAmmo;
     public float cooldown;
     public float range;
     public string description;
@@ -17,10 +15,8 @@ public class WeaponData : ScriptableObject
     public AudioClip shootSound;
     public AudioClip reloadSound;
     public GameObject projectilePrefab;
-
-    public float projectileSpeed = 10f;
+    public float projectileSpeed = 12f; // velocidad del proyectil
 }
-
 
 public enum WeaponType
 {
@@ -29,3 +25,4 @@ public enum WeaponType
     Sniper,
     Knife
 }
+

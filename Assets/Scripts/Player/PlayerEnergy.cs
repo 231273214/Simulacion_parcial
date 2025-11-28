@@ -10,7 +10,7 @@ public class PlayerEnergy : MonoBehaviour
     public float lowEnergyThreshold = 30f;
 
     [Header("Efectos de Cansancio")]
-    public float slowSpeedMultiplier = 0.5f;
+    public float slowSpeedMultiplier = 0.6f;
     public float minSpeedBeforeExhaustion = 2f;
 
     [Header("UI")]
@@ -22,7 +22,7 @@ public class PlayerEnergy : MonoBehaviour
 
     [Header("Recarga por Descanso")]
     public float energyRestoreRate = 10f; 
-    public float timeToStartRestoring = 0.5f;
+    public float timeToStartRestoring = 0.2f;
 
     private float idleTimer = 0f;
     private bool isRestoringEnergy = false;
@@ -117,14 +117,48 @@ public class PlayerEnergy : MonoBehaviour
         if (currentEnergy <= lowEnergyThreshold && !lowEnergyWarningPlayed)
         {
             LowEnergyWarning();
+            if (playerMovement != null)
+            {
+                // Reducir velocidad mientras la energía esté baja
+                playerMovement.moveSpeed = Mathf.Max(originalSpeed * slowSpeedMultiplier, minSpeedBeforeExhaustion);
+                isExhausted = true;
+            }
         }
         else if (currentEnergy > lowEnergyThreshold)
         {
             lowEnergyWarningPlayed = false;
+
+            if (playerMovement != null)
+            {
+                // Restaurar velocidad original cuando la energía ya no esté baja
+                playerMovement.moveSpeed = originalSpeed;
+                isExhausted = false;
+            }
         }
     }
 
-   
+    public void EatFood(float energyAmount, float poisonChance = 0.2f)
+    {
+        bool isPoisoned = Random.value < poisonChance; // 20% de probabilidad de estar envenenada
+        if (isPoisoned)
+        {
+            currentEnergy -= energyAmount; // resta energía si es venenosa
+            currentEnergy = Mathf.Clamp(currentEnergy, 0, maxEnergy);
+            Debug.Log($"¡Comida envenenada! Pierdes {energyAmount} de energía.");
+        }
+        else
+        {
+            AddEnergy(energyAmount); // recupera energía normalmente
+            Debug.Log($"Comida buena! Recuperas {energyAmount} de energía.");
+        }
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            EatFood(20f, 0.25f); // 25% de probabilidad de que la comida sea venenosa
+        }
+
+    }
+
+
 
     void LowEnergyWarning()
     {
