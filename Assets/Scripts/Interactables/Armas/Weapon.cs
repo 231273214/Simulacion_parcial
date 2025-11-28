@@ -1,35 +1,20 @@
 using UnityEngine;
 
-
+[System.Serializable]
 public class Weapon
 {
-    public WeaponType type;
-    public Sprite icon;
-    public Sprite uiIcon;
-    public AudioClip shootSound;
-    public AudioClip reloadSound;
+    public string name;
     public GameObject projectilePrefab;
+    public float fireRate;
+    public float projectileSpeed;
+    public int damage;
 
-    public int damage = 10;
-    public float cooldown = 0.3f;
-    public float range = 1f;
-
-    public int currentAmmo = 9999;   // INFINITA
-    public int maxAmmo = 9999;
-
-    public Weapon(WeaponType type, Sprite icon, Sprite uiIcon,
-                  AudioClip shootSound, AudioClip reloadSound,
-                  GameObject projectilePrefab)
+    public Weapon(string name, GameObject prefab, float fireRate, float projSpeed, int damage)
     {
-        this.type = type;
-        this.icon = icon;
-        this.uiIcon = uiIcon;
-        this.shootSound = shootSound;
-        this.reloadSound = reloadSound;
-        this.projectilePrefab = projectilePrefab;
-
-        this.currentAmmo = 9999;
-        this.maxAmmo = 9999;
+        this.name = name;
+        this.projectilePrefab = prefab;
+        this.fireRate = fireRate;
+        this.projectileSpeed = projSpeed;
+        this.damage = damage;
     }
 }
-

@@ -7,7 +7,7 @@ public class NPCFlee : MonoBehaviour
     public float visionRange = 3f;         // distancia a la que detecta zombies
 
     private Rigidbody2D rb;
-    private Transform threat;               // el zombie más cercano
+    private Transform threat;               // el zombie mï¿½s cercano
     private Vector2 fleeDirection;
 
     void Start()
@@ -34,16 +34,16 @@ public class NPCFlee : MonoBehaviour
         {
             // Huir del zombie
             fleeDirection = (transform.position - threat.position).normalized;
-            rb.velocity = fleeDirection * moveSpeed;
+            rb.linearVelocity = fleeDirection * moveSpeed;
         }
         else
         {
             // Sin amenaza, quedarse quieto
-            rb.velocity = Vector2.zero;
+            rb.linearVelocity = Vector2.zero;
         }
     }
 
-    // Opcional: dibujar el rango de visión en el editor
+    // Opcional: dibujar el rango de visiï¿½n en el editor
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;

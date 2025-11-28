@@ -1,93 +1,56 @@
 using UnityEngine;
-using System.Collections;
+using UnityEngine.InputSystem;
 
 public class WeaponShooter : MonoBehaviour
 {
-    public Transform firePoint;
-    public AudioSource audioSource;
-    private WeaponData weaponData;
+    private Weapon weapon;
+    private float cooldown = 0f;
+    private Transform firePoint;
+    private Vector2 aimDirection = Vector2.right;
 
-    public void SetWeaponData(WeaponData data)
+    public void SetWeapon(Weapon w, Transform firePoint)
     {
-        weaponData = data;
+        weapon = w;
+        this.firePoint = firePoint;
+        cooldown = 0f;
     }
 
-    public void TryShoot()
+    public void UpdateAim(Vector2 direction)
     {
-        if (weaponData == null) return;
-
-        Shoot();
-    }
-
-    void Shoot()
-    {
-        if (weaponData.shootSound && audioSource)
-            audioSource.PlayOneShot(weaponData.shootSound);
-
-        switch (weaponData.type)
+        if (direction.sqrMagnitude > 0.01f)
         {
-            case WeaponType.Pistol: ShootProjectile(); break;
-            case WeaponType.Shotgun: ShootShotgun(); break;
-            case WeaponType.Sniper: ShootProjectile(); break;
-            case WeaponType.Knife: MeleeAttack(); break;
+            aimDirection = direction.normalized;
+            float angle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg;
+            firePoint.rotation = Quaternion.Euler(0, 0, angle);
+        }
+        else
+        {
+            // Apuntar con mouse si no hay input de joystick
+            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+            aimDirection = (mousePos - firePoint.position);
+            float angle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg;
+            firePoint.rotation = Quaternion.Euler(0, 0, angle);
         }
     }
 
-    void ShootProjectile()
+    void Update()
     {
-        if (!weaponData.projectilePrefab) return;
-
-        GameObject proj = Instantiate(weaponData.projectilePrefab, firePoint.position, Quaternion.identity);
-        Vector2 dir = GetShootDirection();
-        proj.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
-
-        Bullet b = proj.GetComponent<Bullet>();
-        if (b != null)
-        {
-            b.damage = weaponData.damage;
-            b.speed = weaponData.projectileSpeed;
-        }
+        if (weapon == null) return;
+        cooldown -= Time.deltaTime;
     }
 
-    void ShootShotgun()
+    public void Shoot()
     {
-        Vector2 baseDir = GetShootDirection();
-        float[] angles = { 0, 15, -15, 30, -30 };
-        foreach (float a in angles)
-        {
-            Vector2 dir = Quaternion.Euler(0, 0, a) * baseDir;
-            GameObject proj = Instantiate(weaponData.projectilePrefab, firePoint.position, Quaternion.identity);
-            proj.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
-            Bullet b = proj.GetComponent<Bullet>();
-            if (b != null)
-            {
-                b.damage = weaponData.damage;
-                b.speed = weaponData.projectileSpeed;
-            }
-        }
-    }
+        if (weapon == null || cooldown > 0f) return;
 
-    void MeleeAttack()
-    {
-        Collider2D[] targets = Physics2D.OverlapCircleAll(firePoint.position, weaponData.range);
-        foreach (var t in targets)
-            if (t.CompareTag("Zombie"))
-                t.GetComponent<ZombieHealth>()?.TakeDamage(weaponData.damage);
-    }
-
-    Vector2 GetShootDirection()
-    {
-        // Prioriza joystick
-        if (WeaponInputHandler.Instance != null)
+        GameObject proj = Instantiate(weapon.projectilePrefab, firePoint.position, firePoint.rotation);
+        Bullet bullet = proj.GetComponent<Bullet>();
+        if (bullet != null)
         {
-            Vector2 dir = WeaponInputHandler.Instance.GetAimDirection();
-            if (dir.magnitude > 0.2f) return dir.normalized;
+            bullet.damage = weapon.damage;
+            bullet.speed = weapon.projectileSpeed;
         }
 
-        // Mouse
-        Vector2 mousePos = Camera.main.ScreenToWorldPoint(UnityEngine.InputSystem.Mouse.current.position.ReadValue());
-        return (mousePos - (Vector2)firePoint.position).normalized;
+        cooldown = weapon.fireRate;
     }
 }
-
-

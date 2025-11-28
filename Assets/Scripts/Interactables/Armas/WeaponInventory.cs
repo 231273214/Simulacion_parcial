@@ -1,92 +1,75 @@
-using UnityEngine;
-using UnityEngine.UI;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class WeaponInventory : MonoBehaviour
 {
-    public List<WeaponData> weapons = new List<WeaponData>();
+    public List<Weapon> weapons = new List<Weapon>();
     public int currentWeaponIndex = 0;
-
-    [Header("UI")]
-    public Image[] weaponSlots;
-    public Color selectedColor = Color.yellow;
-    public Color normalColor = Color.white;
-    public Text ammoText;
-    public Text weaponNameText;
-    public SpriteRenderer weaponSpriteRenderer;
-
-    public WeaponShooter shooterPrefab;
     private WeaponShooter currentShooter;
 
-    public WeaponData CurrentWeapon => weapons.Count > 0 ? weapons[currentWeaponIndex] : null;
-    public WeaponShooter CurrentShooter => currentShooter;
+    public WeaponShooter shooterPrefab;
+    public Transform firePoint;
 
-    void Start()
+    private PlayerController controls;
+
+    void Awake()
     {
-        if (weapons.Count > 0)
-            EquipWeapon(0);
+        controls = new PlayerController();
+        controls.Player.NextWeapon.performed += ctx => EquipNextWeapon();
+        controls.Player.PreviousWeapon.performed += ctx => EquipPreviousWeapon();
+        controls.Player.Shoot.performed += ctx => currentShooter?.Shoot();
     }
 
-    public void AddWeapon(WeaponData newWeapon)
-    {
-        if (weapons.Exists(w => w.type == newWeapon.type)) return;
-        weapons.Add(newWeapon);
-        UpdateInventoryUI();
+    void OnEnable() => controls.Enable();
+    void OnDisable() => controls.Disable();
 
-        if (weapons.Count == 1)
-            EquipWeapon(0);
+    void Update()
+    {
+        // Cambiar armas con teclas 1-4
+        if (Keyboard.current.digit1Key.wasPressedThisFrame) EquipWeapon(0);
+        if (Keyboard.current.digit2Key.wasPressedThisFrame) EquipWeapon(1);
+        if (Keyboard.current.digit3Key.wasPressedThisFrame) EquipWeapon(2);
+        if (Keyboard.current.digit4Key.wasPressedThisFrame) EquipWeapon(3);
+
+        // Actualizar direcci√≥n del disparo con joystick derecho
+        Vector2 aimDir = controls.Player.AimDirection.ReadValue<Vector2>();
+        if (currentShooter != null) currentShooter.UpdateAim(aimDir);
+    }
+
+    public Weapon CurrentWeapon => weapons.Count > 0 ? weapons[currentWeaponIndex] : null;
+
+    public void AddWeapon(Weapon weapon)
+    {
+        if (weapons.Contains(weapon)) return;
+        weapons.Add(weapon);
+        EquipWeapon(weapons.Count - 1);
     }
 
     public void EquipWeapon(int index)
     {
         if (weapons.Count == 0) return;
-        index = Mathf.Clamp(index, 0, weapons.Count - 1);
+        if (index < 0 || index >= weapons.Count) return;
+
         currentWeaponIndex = index;
 
         if (currentShooter != null) Destroy(currentShooter.gameObject);
 
-        currentShooter = Instantiate(shooterPrefab, transform.position, Quaternion.identity, transform);
-        currentShooter.SetWeaponData(CurrentWeapon);
-
-        UpdateInventoryUI();
+        currentShooter = Instantiate(shooterPrefab, firePoint.position, Quaternion.identity, transform);
+        currentShooter.SetWeapon(CurrentWeapon, firePoint);
     }
 
     public void EquipNextWeapon()
     {
-        if (weapons.Count == 0) return;
         EquipWeapon((currentWeaponIndex + 1) % weapons.Count);
     }
 
     public void EquipPreviousWeapon()
     {
-        if (weapons.Count == 0) return;
         int newIndex = currentWeaponIndex - 1;
         if (newIndex < 0) newIndex = weapons.Count - 1;
         EquipWeapon(newIndex);
     }
-
-    void UpdateInventoryUI()
-    {
-        for (int i = 0; i < weaponSlots.Length; i++)
-        {
-            if (i < weapons.Count)
-            {
-                weaponSlots[i].sprite = weapons[i].weaponUISprite;
-                weaponSlots[i].color = i == currentWeaponIndex ? selectedColor : normalColor;
-            }
-            else
-            {
-                weaponSlots[i].sprite = null;
-                weaponSlots[i].color = Color.gray;
-            }
-        }
-
-        if (CurrentWeapon != null)
-        {
-            ammoText.text = "?"; // MuniciÛn infinita
-            weaponNameText.text = CurrentWeapon.name;
-            if (weaponSpriteRenderer != null)
-                weaponSpriteRenderer.sprite = CurrentWeapon.weaponSprite;
-        }
-    }
 }
+
+

@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 public class PlayerInteraction : MonoBehaviour
 {
     public float interactRange = 2f;
-    public LayerMask interactLayer; // Capa de objetos interactuables
+    public LayerMask interactableLayer; 
 
     private PlayerController controls;
 
@@ -20,7 +20,7 @@ public class PlayerInteraction : MonoBehaviour
     void TryInteract()
     {
         // Detecta todos los objetos dentro del rango
-        Collider2D hit = Physics2D.OverlapCircle(transform.position, interactRange, interactLayer);
+        Collider2D hit = Physics2D.OverlapCircle(transform.position, interactRange, interactableLayer);
 
         if (hit == null)
         {
@@ -48,6 +48,3 @@ public class PlayerInteraction : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, interactRange);
     }
 }
-
-
-
