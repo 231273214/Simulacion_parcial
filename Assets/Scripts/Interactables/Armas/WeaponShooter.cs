@@ -10,6 +10,14 @@ public class WeaponShooter : MonoBehaviour
 
     public void SetWeapon(Weapon w, Transform firePoint)
     {
+        // NUEVO: Verificar que el arma sea de tipo ranged
+        if (w.type != WeaponType.Ranged)
+        {
+            Debug.LogWarning($"WeaponShooter intentó equipar un arma {w.type}: {w.name}");
+            Destroy(gameObject);
+            return;
+        }
+
         weapon = w;
         this.firePoint = firePoint;
         cooldown = 0f;
@@ -42,6 +50,13 @@ public class WeaponShooter : MonoBehaviour
     public void Shoot()
     {
         if (weapon == null || cooldown > 0f) return;
+
+        // NUEVO: Verificar que tenga prefab de proyectil
+        if (weapon.projectilePrefab == null)
+        {
+            Debug.LogError($"No hay projectilePrefab asignado para el arma: {weapon.name}");
+            return;
+        }
 
         GameObject proj = Instantiate(weapon.projectilePrefab, firePoint.position, firePoint.rotation);
         Bullet bullet = proj.GetComponent<Bullet>();
