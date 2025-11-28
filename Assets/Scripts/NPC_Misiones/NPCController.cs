@@ -1,5 +1,7 @@
-using UnityEngine;
 using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class NPCController : MonoBehaviour
 {
@@ -39,6 +41,7 @@ public class NPCController : MonoBehaviour
 
     private bool isPlayerInRange = false;
     private List<MissionData> availableMissions = new List<MissionData>();
+    private bool canInteract = true;
 
     void Start()
     {
@@ -64,18 +67,41 @@ public class NPCController : MonoBehaviour
         if (interactionIndicator != null)
         {
             if (isPlayerInRange && !wasInRange)
+            {
                 interactionIndicator.SetActive(true);
+                UpdateInteractionPrompt();
+            }
             else if (!isPlayerInRange && wasInRange)
                 interactionIndicator.SetActive(false);
         }
 
-        // Interacción con E
-        if (isPlayerInRange && Input.GetKeyDown(KeyCode.E))
+        // Interacción con E, Click o Gamepad
+        if (isPlayerInRange && canInteract)
         {
-            InteractWithPlayer();
+            if (Keyboard.current.eKey.wasPressedThisFrame ||
+                Mouse.current.leftButton.wasPressedThisFrame ||
+                (Gamepad.current != null && Gamepad.current.aButton.wasPressedThisFrame))
+            {
+                InteractWithPlayer();
+            }
         }
     }
 
+    void UpdateInteractionPrompt()
+    {
+        // Alternativa si usas UI Canvas en lugar de TextMeshPro
+        if (interactionIndicator != null)
+        {
+            UnityEngine.UI.Text promptText = interactionIndicator.GetComponentInChildren<UnityEngine.UI.Text>();
+            if (promptText != null)
+            {
+                if (Gamepad.current != null)
+                    promptText.text = "Presiona A para hablar";
+                else
+                    promptText.text = "Presiona E para hablar";
+            }
+        }
+    }
     void UpdateAvailableMissions()
     {
         if (MissionManager.Instance != null)
@@ -87,6 +113,10 @@ public class NPCController : MonoBehaviour
 
     void InteractWithPlayer()
     {
+        if (!canInteract) return;
+
+        canInteract = false;
+
         PlayerMovement playerMovement = player.GetComponent<PlayerMovement>();
         if (playerMovement != null) playerMovement.enabled = false;
 
@@ -104,6 +134,7 @@ public class NPCController : MonoBehaviour
             Debug.LogError("DialogUI no encontrado!");
             // Reactivar movimiento si no hay UI
             if (playerMovement != null) playerMovement.enabled = true;
+            canInteract = true;
         }
     }
 
@@ -150,8 +181,6 @@ public class NPCController : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, interactionRange);
     }
 
-    
-
     void OnMissionDecision(bool accepted)
     {
         // Reactivar movimiento del player
@@ -167,5 +196,7 @@ public class NPCController : MonoBehaviour
         {
             Debug.Log("Misión rechazada");
         }
+
+        canInteract = true; // Permitir interacción nuevamente
     }
 }

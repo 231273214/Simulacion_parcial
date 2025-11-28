@@ -22,7 +22,6 @@ public class InputManager : MonoBehaviour
     public Vector2 MoveInput { get; private set; }
     public Vector2 AimInput { get; private set; }
 
-
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -63,8 +62,8 @@ public class InputManager : MonoBehaviour
         {
             controls.Player.Enable();
         }
-        controls.Enable();
-        controls.Player.Interact.performed += ctx => OnInteract?.Invoke();
+        controls?.Enable();
+        
     }
 
     void OnDisable()
@@ -72,9 +71,9 @@ public class InputManager : MonoBehaviour
         if (controls != null)
         {
             controls.Player.Disable();
+            controls.Player.Interact.performed -= ctx => OnInteract?.Invoke();
+            controls.Disable();
         }
-        controls.Player.Interact.performed -= ctx => OnInteract?.Invoke();
-        controls.Disable();
     }
 
     void OnDestroy()
@@ -82,6 +81,7 @@ public class InputManager : MonoBehaviour
         if (controls != null)
         {
             controls.Dispose();
+            controls = null;
         }
     }
 }

@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 8032499518461150293}
   - component: {fileID: 5975910390760711870}
   - component: {fileID: 1466682574592272373}
-  - component: {fileID: 5119608967496806706}
   m_Layer: 0
   m_Name: Dc.Rodriguez
   m_TagString: Untagged
@@ -189,20 +188,3 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &5119608967496806706
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 740338159192149741}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1d8e3988a7cbc484b9dcb95f3ae9556d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NPCController
-  npcName: Superviviente
-  interactionRange: 2
-  availableMissions: []
-  interactionIndicator: {fileID: 0}
-  player: {fileID: 0}
