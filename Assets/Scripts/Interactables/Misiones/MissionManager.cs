@@ -8,6 +8,8 @@ public class MissionManager : MonoBehaviour
     public List<MissionData> allMissions = new List<MissionData>();
     private List<MissionData> activeMissions = new List<MissionData>();
 
+    private MissionNotifications missionNotifications;
+
     void Awake()
     {
         if (Instance != null)
@@ -19,6 +21,8 @@ public class MissionManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         CreateAllMissions();
+
+        missionNotifications = FindObjectOfType<MissionNotifications>();
     }
 
     void CreateAllMissions()
@@ -92,6 +96,8 @@ public class MissionManager : MonoBehaviour
             ActivateMissionZone(missionID);
 
             Debug.Log($"Misión aceptada: {mission.title}");
+
+            ShowNotification($"Misión aceptada: {mission.title}");
         }
     }
 
@@ -117,6 +123,25 @@ public class MissionManager : MonoBehaviour
             {
                 mission.state = MissionState.Completed;
                 Debug.Log($"¡Misión completada: {mission.title}!");
+
+                ShowNotification($"¡Misión completada: {mission.title}!");
+            }
+        }
+    }
+
+    private void ShowNotification(string message)
+    {
+        if (missionNotifications != null)
+        {
+            missionNotifications.ShowNotification(message);
+        }
+        else
+        {
+            // Si no encuentra las notificaciones, buscarlas de nuevo
+            missionNotifications = FindObjectOfType<MissionNotifications>();
+            if (missionNotifications != null)
+            {
+                missionNotifications.ShowNotification(message);
             }
         }
     }
