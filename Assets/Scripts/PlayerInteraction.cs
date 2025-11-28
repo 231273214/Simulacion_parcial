@@ -1,51 +1,45 @@
 using UnityEngine;
-using TMPro;
+using UnityEngine.InputSystem;
 
 public class PlayerInteraction : MonoBehaviour
 {
-    [Header("Interacción")]
-    public float interactRange = 1.5f;
-    public LayerMask interactableLayer;
+    public float interactRange = 2f;
+    public LayerMask interactLayer; // Capa de objetos interactuables
 
-    [Header("UI")]
-    public GameObject interactionUIPanel;
-    public TextMeshProUGUI interactionText;
+    private PlayerController controls;
 
-    void Start()
+    void Awake()
     {
-        InputManager.Instance.OnInteract += HandleInteract;
-
-        if (interactionUIPanel != null)
-            interactionUIPanel.SetActive(false);
+        controls = new PlayerController();
+        controls.Player.Interact.performed += ctx => TryInteract();
     }
 
-    void Update()
+    void OnEnable() => controls.Enable();
+    void OnDisable() => controls.Disable();
+
+    void TryInteract()
     {
-        // Mostrar texto si hay un interactuable en rango
-        Collider2D hit = Physics2D.OverlapCircle(transform.position, interactRange, interactableLayer);
-        if (hit != null)
+        // Detecta todos los objetos dentro del rango
+        Collider2D hit = Physics2D.OverlapCircle(transform.position, interactRange, interactLayer);
+
+        if (hit == null)
         {
-            IInteractable interactable = hit.GetComponent<IInteractable>();
-            if (interactable != null && interactionUIPanel != null && interactionText != null)
-            {
-                interactionText.text = interactable.GetInteractText();
-                interactionUIPanel.SetActive(true);
-                return;
-            }
+            Debug.Log("Nada para interactuar en el círculo.");
+            return;
         }
 
-        if (interactionUIPanel != null)
-            interactionUIPanel.SetActive(false);
-    }
+        IInteractable interactable = hit.GetComponent<IInteractable>();
 
-    void HandleInteract()
-    {
-        Collider2D hit = Physics2D.OverlapCircle(transform.position, interactRange, interactableLayer);
-        if (hit != null)
+        if (interactable == null)
         {
-            IInteractable interactable = hit.GetComponent<IInteractable>();
-            if (interactable != null) interactable.Interact(gameObject);
+            Debug.Log("El objeto no tiene IInteractable");
+            return;
         }
+
+        Debug.Log("Interactuando con: " + hit.name);
+
+        // Llama al método del objeto interactivo
+        interactable.Interact(gameObject);
     }
 
     void OnDrawGizmosSelected()
@@ -54,4 +48,6 @@ public class PlayerInteraction : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, interactRange);
     }
 }
+
+
 

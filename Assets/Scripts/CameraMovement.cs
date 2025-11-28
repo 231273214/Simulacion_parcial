@@ -1,78 +1,31 @@
-using System.Collections;
 using UnityEngine;
 
 public class CameraMovement : MonoBehaviour
 {
     [Header("Referencias")]
-    public Transform player;
-    public Camera cam;
+    public Transform player;    // Asigna el Transform del jugador
+    public Camera cam;          // Cámara a controlar
 
     [Header("Movimiento")]
-    public float moveSpeed = 10f;
-    private Vector2 cameraMoveInput;
-
-    [Header("Zoom")]
-    public float zoomSpeed = 5f;
-    public float minZoom = 5f;
-    public float maxZoom = 15f;
-    private float zoomInput;
-
-    [Header("Recentrar")]
-    public bool followPlayer = false;
+    public float smoothSpeed = 5f; // Velocidad de seguimiento
 
     private float cameraHeight;
 
     void Start()
     {
         if (cam == null) cam = Camera.main;
-
-        cameraHeight = cam.transform.position.z;
-
-        // Suscribirse a eventos del InputManager
-        InputManager.Instance.OnCameraMove += HandleCameraMove;
-        InputManager.Instance.OnRecenterCamera += HandleRecenter;
-    }
-
-    void HandleCameraMove(Vector2 input)
-    {
-        followPlayer = false;
-        cameraMoveInput = input;
-    }
-
-    void HandleRecenter()
-    {
-        followPlayer = !followPlayer;
-        if (player != null && followPlayer) StartCoroutine(RecenterSmooth());
-    }
-
-    IEnumerator RecenterSmooth()
-    {
-        while (followPlayer)
-        {
-            Vector3 targetPos = new Vector3(player.position.x, player.position.y, cameraHeight);
-            cam.transform.position = Vector3.Lerp(cam.transform.position, targetPos, 5f * Time.deltaTime);
-
-            followPlayer = !(Vector3.Distance(transform.position, targetPos) < 0.1f);
-
-            yield return null;
-        }
+        cameraHeight = cam.transform.position.z; // Mantener la altura actual de la cámara
     }
 
     void Update()
     {
-        // Si se activó recentrar
-        if (followPlayer && player != null)
-        {
-            Vector3 targetPos = new Vector3(player.position.x, player.position.y, cameraHeight);
+        if (player == null) return;
 
-            cam.transform.position = Vector3.Lerp(cam.transform.position, targetPos, 5f * Time.deltaTime);
-        }
-        else
-        {
-            // Movimiento libre
-            Vector3 movement = new Vector3(cameraMoveInput.x, cameraMoveInput.y, cameraHeight);
+        // Posición objetivo (solo X e Y)
+        Vector3 targetPos = new Vector3(player.position.x, player.position.y, cameraHeight);
 
-            cam.transform.Translate(movement * moveSpeed * Time.deltaTime, Space.World);
-        }
+        // Lerp suave hacia el jugador
+        cam.transform.position = Vector3.Lerp(cam.transform.position, targetPos, smoothSpeed * Time.deltaTime);
     }
 }
+

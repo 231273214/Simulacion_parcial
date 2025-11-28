@@ -7,13 +7,13 @@ public class PlayerMovement : MonoBehaviour
 
     private Vector2 moveInput;
     public Animator animator;
-    private Rigidbody2D rb; // AGREGAR ESTA LÍNEA
+    private Rigidbody2D rb; 
 
     private bool isFacingRight = true;
 
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>(); // AGREGAR ESTA LÍNEA
+        rb = GetComponent<Rigidbody2D>(); 
         InputManager.Instance.OnMove += HandleMove;
     }
 

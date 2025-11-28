@@ -1,83 +1,40 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using TMPro;
 using System.Collections;
+using UnityEngine.InputSystem;
 
 public class InteractiveSceneChanger : MonoBehaviour
 {
-    [Header("Scene Settings")]
-    public string targetSceneName;
-    public string displayText = "Presiona E para ir a la primera simulación";
-
-    [Header("Interaction Settings")]
-    public float detectionRange = 2.5f;
-    public KeyCode interactionKey = KeyCode.E;
-
-    [Header("UI Components")]
+    [Header("UI")]
     public CanvasGroup uiPanel;
-    public Text messageText;
+    public TextMeshProUGUI messageText;
     public float fadeDuration = 0.5f;
+    public string displayText = "Presiona E o Button South para continuar";
 
-    private Transform playerTransform;
+    [Header("Interaction")]
+    public float detectionRange = 2.5f;
+
     private bool isPlayerNear = false;
-    private bool isUIVisible = false;
-    private bool isTransitioning = false;
 
     void Start()
     {
-        FindPlayer();
-        SetupUI();
+        if (messageText != null)
+            messageText.text = displayText;
 
-        // Asegurar que el tiempo esté corriendo
-        Time.timeScale = 1f;
-    }
-
-    void FindPlayer()
-    {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-        {
-            playerTransform = player.transform;
-        }
-        else
-        {
-            Debug.LogWarning("Player no encontrado, buscando en Update...");
-        }
-    }
-
-    void SetupUI()
-    {
         if (uiPanel != null)
         {
             uiPanel.alpha = 0f;
             uiPanel.gameObject.SetActive(false);
         }
-
-        if (messageText != null)
-        {
-            messageText.text = displayText;
-        }
     }
 
     void Update()
     {
-        if (playerTransform == null)
-        {
-            FindPlayer();
-            return;
-        }
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return;
 
-        CheckPlayerDistance();
-
-        if (isPlayerNear && Input.GetKeyDown(interactionKey) && !isTransitioning)
-        {
-            ChangeScene();
-        }
-    }
-
-    void CheckPlayerDistance()
-    {
-        float distance = Vector2.Distance(transform.position, playerTransform.position);
+        float distance = Vector2.Distance(transform.position, player.transform.position);
 
         if (distance <= detectionRange && !isPlayerNear)
         {
@@ -89,13 +46,20 @@ public class InteractiveSceneChanger : MonoBehaviour
             isPlayerNear = false;
             HideUI();
         }
+
+        // Detectar interacción: teclado o Input System (Button South)
+        if (isPlayerNear && !IsTransitioning() &&
+            (Keyboard.current.eKey.wasPressedThisFrame ||
+             Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame))
+        {
+            ChangeScene();
+        }
     }
 
     void ShowUI()
     {
-        if (uiPanel != null && !isUIVisible)
+        if (uiPanel != null)
         {
-            isUIVisible = true;
             uiPanel.gameObject.SetActive(true);
             StartCoroutine(FadeUI(0f, 1f, fadeDuration));
         }
@@ -103,74 +67,38 @@ public class InteractiveSceneChanger : MonoBehaviour
 
     void HideUI()
     {
-        if (uiPanel != null && isUIVisible)
+        if (uiPanel != null)
         {
-            isUIVisible = false;
             StartCoroutine(FadeUI(1f, 0f, fadeDuration, true));
         }
     }
 
     void ChangeScene()
     {
-        if (!string.IsNullOrEmpty(targetSceneName) && !isTransitioning)
-        {
-            isTransitioning = true;
-            Debug.Log($"Cambiando a escena: {targetSceneName}");
-
-            StartCoroutine(TransitionToScene());
-        }
-        else
-        {
-            Debug.LogError("Nombre de escena no asignado");
-        }
+        SceneManager.LoadScene(1);
     }
 
-    IEnumerator TransitionToScene()
+    IEnumerator FadeUI(float from, float to, float duration, bool disableOnComplete = false)
     {
-        // Fade out de la UI
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            if (uiPanel != null)
+                uiPanel.alpha = Mathf.Lerp(from, to, elapsed / duration);
+            yield return null;
+        }
         if (uiPanel != null)
-        {
-            yield return StartCoroutine(FadeUI(uiPanel.alpha, 0f, 0.5f));
-        }
+            uiPanel.alpha = to;
 
-        // Asegurar que el tiempo esté normal antes de cambiar escena
-        Time.timeScale = 1f;
-        AudioListener.pause = false;
-
-        // Cargar la escena de manera asíncrona
-        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(targetSceneName);
-        asyncLoad.allowSceneActivation = false;
-
-        // Esperar a que la escena esté casi cargada
-        while (!asyncLoad.isDone)
-        {
-            if (asyncLoad.progress >= 0.9f)
-            {
-                asyncLoad.allowSceneActivation = true;
-            }
-            yield return null;
-        }
+        if (disableOnComplete)
+            uiPanel.gameObject.SetActive(false);
     }
 
-    IEnumerator FadeUI(float fromAlpha, float toAlpha, float duration, bool disableOnComplete = false)
+    bool IsTransitioning()
     {
-        if (uiPanel == null) yield break;
-
-        float elapsedTime = 0f;
-
-        while (elapsedTime < duration)
-        {
-            elapsedTime += Time.deltaTime;
-            uiPanel.alpha = Mathf.Lerp(fromAlpha, toAlpha, elapsedTime / duration);
-            yield return null;
-        }
-
-        uiPanel.alpha = toAlpha;
-
-        if (disableOnComplete && toAlpha == 0f)
-        {
-            uiPanel.gameObject.SetActive(false);
-        }
+        // Opcional: puedes agregar un bool si quieres evitar múltiples cambios rápidos de escena
+        return false;
     }
 
     void OnDrawGizmos()
@@ -179,3 +107,7 @@ public class InteractiveSceneChanger : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, detectionRange);
     }
 }
+
+
+
+

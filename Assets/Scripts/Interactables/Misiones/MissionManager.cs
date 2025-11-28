@@ -80,6 +80,8 @@ public class MissionManager : MonoBehaviour
 
     public void AcceptMission(string missionID)
     {
+        StopAllZombieSpawners();
+
         MissionData mission = allMissions.Find(m => m.missionID == missionID);
         if (mission != null && mission.state == MissionState.Available)
         {
@@ -139,4 +141,27 @@ public class MissionManager : MonoBehaviour
             // Aquí conectar con sistemas del player
         }
     }
+
+    void StopAllZombieSpawners()
+    {
+        ZombieSpawner[] spawners = FindObjectsOfType<ZombieSpawner>();
+        foreach (ZombieSpawner sp in spawners)
+        {
+            sp.SetGlobalSpawning(false);
+        }
+
+        Debug.Log("Todos los spawners de zombies han sido detenidos.");
+    }
+
+    void ResumeAllZombieSpawners()
+    {
+        ZombieSpawner[] spawners = FindObjectsOfType<ZombieSpawner>();
+        foreach (ZombieSpawner sp in spawners)
+        {
+            sp.SetGlobalSpawning(true);
+        }
+
+        Debug.Log("Todos los spawners de zombies han sido reactivados.");
+    }
+
 }

@@ -3,41 +3,33 @@ using UnityEngine.InputSystem;
 
 public class WeaponInputHandler : MonoBehaviour
 {
-    public WeaponShooter shooter;
     private PlayerController controls;
+    private WeaponInventory weaponInventory;
 
     private Vector2 aimDirection;
 
     void Awake()
     {
         controls = new PlayerController();
+        weaponInventory = GetComponent<WeaponInventory>();
 
-        // DISPARO (gatillo derecho)
+        // Disparo
         controls.Player.Shoot.performed += ctx =>
         {
-            if (shooter != null)
-                shooter.HandleShootInput();
+            if (weaponInventory.CurrentShooter != null)
+                weaponInventory.CurrentShooter.HandleShootInput();
         };
-
-        // RECARGA
-        //controls.Player.Reload.performed += ctx =>
-        //{
-           // if (shooter != null)
-                //shooter.HandleReloadInput();
-        //};
 
         // Cambiar arma siguiente
         controls.Player.NextWeapon.performed += ctx =>
         {
-            if (shooter != null)
-                shooter.HandleNextWeaponInput();
+            weaponInventory.EquipNextWeapon();
         };
 
         // Cambiar arma anterior
         controls.Player.PreviousWeapon.performed += ctx =>
         {
-            if (shooter != null)
-                shooter.HandlePreviousWeaponInput();
+            weaponInventory.EquipPreviousWeapon();
         };
 
         // Dirección de apuntado (joystick derecho)
@@ -52,4 +44,5 @@ public class WeaponInputHandler : MonoBehaviour
 
     public Vector2 GetAimDirection() => aimDirection;
 }
+
 

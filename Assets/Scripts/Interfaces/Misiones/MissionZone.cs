@@ -20,7 +20,7 @@ public class MissionZone : MonoBehaviour
     void Start()
     {
         // Desactivar todo al inicio
-        if (zombieSpawner != null) zombieSpawner.enabled = false;
+        if(zombieSpawner != null) zombieSpawner.SetGlobalSpawning(false);
         if (missionUI != null) missionUI.SetActive(false);
         if (missionTimer != null) missionTimer.StopTimer();
     }
@@ -66,38 +66,32 @@ public class MissionZone : MonoBehaviour
 
     void StartMissionInZone()
     {
+        // activar sólo este spawner
         if (zombieSpawner != null)
         {
-            zombieSpawner.enabled = true;
-            zombieSpawner.StartSpawning();
+            zombieSpawner.SetGlobalSpawning(true);
         }
 
         if (missionUIUpdater != null && missionData != null)
             missionUIUpdater.ShowMissionUI(missionData);
-        
+
         if (missionID == "SURVIVE_3_MINUTES" && missionTimer != null)
-        {
-            missionTimer.StartTimer(180f); 
-        }
-        
+            missionTimer.StartTimer(180f);
+
         if (missionData != null)
             missionData.state = MissionState.Active;
 
         Debug.Log($"Misión {missionID} iniciada en zona");
     }
 
-
     void PauseMissionInZone()
     {
-        
         if (zombieSpawner != null)
-            zombieSpawner.enabled = false;
+            zombieSpawner.SetGlobalSpawning(false);
 
-       
         if (missionUIUpdater != null)
             missionUIUpdater.HideMissionUI();
 
-        
         if (missionTimer != null)
             missionTimer.PauseTimer();
 
@@ -106,6 +100,7 @@ public class MissionZone : MonoBehaviour
 
         Debug.Log("Misión pausada en zona");
     }
+
 
     void CompleteMission()
     {

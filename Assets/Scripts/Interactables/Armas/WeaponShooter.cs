@@ -1,192 +1,62 @@
 using UnityEngine;
 using System.Collections;
-using UnityEngine.InputSystem;
 
 public class WeaponShooter : MonoBehaviour
 {
-    [Header("Referencias")]
     public Transform firePoint;
     public AudioSource audioSource;
-    public WeaponInventory weaponInventory;
-    public WeaponInputHandler inputHandler;
+
+    [HideInInspector] public WeaponData weaponData;
 
     private float lastFireTime;
     private bool isReloading = false;
 
-    void Update()
+    public void SetWeaponData(WeaponData data)
     {
-        // Si usa mouse, deja que apunte normal
-        RotateToAimDirection();
+        weaponData = data;
     }
 
-    // ===============================
-    //    ENTRADAS DEL JUGADOR
-    // ===============================
     public void HandleShootInput()
     {
         TryShoot();
     }
 
-    public void HandleReloadInput()
+    void TryShoot()
     {
-        TryReload();
-    }
-
-    public void HandleNextWeaponInput()
-    {
-        weaponInventory.EquipNextWeapon();
-    }
-
-    public void HandlePreviousWeaponInput()
-    {
-        weaponInventory.EquipPreviousWeapon();
-    }
-
-    // ===============================
-    //            DISPARAR
-    // ===============================
-    public void TryShoot()
-    {
-        if (weaponInventory == null || weaponInventory.CurrentWeapon == null) return;
+        if (weaponData == null) return;
         if (isReloading) return;
 
-        if (Time.time >= lastFireTime + weaponInventory.CurrentWeapon.cooldown)
+        if (Time.time >= lastFireTime + weaponData.cooldown)
         {
-            if (weaponInventory.CanShoot())
-                Shoot();
-            else
-                Debug.Log("Sin balas");
+            Shoot();
+            lastFireTime = Time.time;
         }
     }
 
     void Shoot()
     {
-        lastFireTime = Time.time;
-        weaponInventory.ConsumeAmmo();
-
         // Sonido
-        if (audioSource && weaponInventory.CurrentWeapon.shootSound)
-            audioSource.PlayOneShot(weaponInventory.CurrentWeapon.shootSound);
+        if (audioSource && weaponData.shootSound)
+            audioSource.PlayOneShot(weaponData.shootSound);
 
-        // Tipo de arma
-        switch (weaponInventory.CurrentWeapon.type)
+        // Proyectil
+        if (weaponData.projectilePrefab)
         {
-            case WeaponType.Pistol:
-                ShootPistol();
-                break;
-            case WeaponType.Shotgun:
-                ShootShotgun();
-                break;
-            case WeaponType.Sniper:
-                ShootSniper();
-                break;
-            case WeaponType.Knife:
-                ShootKnife();
-                break;
+            GameObject projectile = Instantiate(weaponData.projectilePrefab, firePoint.position, firePoint.rotation);
+            Bullet b = projectile.GetComponent<Bullet>();
+            if (b != null)
+            {
+                b.damage = weaponData.damage;
+                b.speed = weaponData.projectileSpeed;
+            }
         }
     }
 
-    // ===============================
-    //            DIRECCIÓN
-    // ===============================
-    Vector2 GetShootDirection()
+    public void RotateToDirection(Vector2 direction)
     {
-        // 1?? Dirección del joystick derecho
-        Vector2 stickDir = inputHandler.GetAimDirection();
-        if (stickDir.magnitude > 0.2f)
-            return stickDir.normalized;
-
-        // 2?? Dirección del mouse
-        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        return (mousePos - (Vector2)firePoint.position).normalized;
-    }
-
-    void RotateToAimDirection()
-    {
-        Vector2 dir = GetShootDirection();
-        if (dir.sqrMagnitude <= 0.01f) return;
-
-        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+        if (direction.sqrMagnitude <= 0.01f) return;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         firePoint.rotation = Quaternion.Euler(0, 0, angle);
     }
-
-    // ===============================
-    //        LÓGICA DE BALAS
-    // ===============================
-    void ShootPistol()
-    {
-        CreateProjectile(GetShootDirection(), weaponInventory.CurrentWeapon.damage, 12f);
-    }
-
-    void ShootShotgun()
-    {
-        Vector2 baseDir = GetShootDirection();
-        float[] angles = { 0, 15, -15, 30, -30 };
-
-        foreach (float a in angles)
-            CreateProjectile(Quaternion.Euler(0, 0, a) * baseDir,
-                weaponInventory.CurrentWeapon.damage, 8f);
-    }
-
-    void ShootSniper()
-    {
-        CreateProjectile(GetShootDirection(), weaponInventory.CurrentWeapon.damage, 20f);
-    }
-
-    void ShootKnife()
-    {
-        Collider2D[] hitTargets =
-            Physics2D.OverlapCircleAll(firePoint.position, weaponInventory.CurrentWeapon.range);
-
-        foreach (Collider2D t in hitTargets)
-            if (t.CompareTag("Zombie"))
-                t.GetComponent<ZombieHealth>()?.TakeDamage(weaponInventory.CurrentWeapon.damage);
-    }
-
-    void CreateProjectile(Vector2 direction, int damage, float speed)
-    {
-        if (!weaponInventory.CurrentWeapon.projectilePrefab) return;
-
-        GameObject projectile =
-            Instantiate(weaponInventory.CurrentWeapon.projectilePrefab, firePoint.position, Quaternion.identity);
-
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        projectile.transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
-
-        Bullet b = projectile.GetComponent<Bullet>();
-        if (b != null)
-        {
-            b.damage = damage;
-            b.speed = speed;
-        }
-    }
-
-    // ===============================
-    //         RECARGAR
-    // ===============================
-    public void TryReload()
-    {
-        if (weaponInventory.weapons.Count == 0 || weaponInventory.CurrentWeapon == null) return;
-        if (isReloading) return;
-
-        if (weaponInventory.CurrentWeapon.type == WeaponType.Knife) return;
-
-        if (weaponInventory.CurrentWeapon.currentAmmo >= weaponInventory.CurrentWeapon.maxAmmo) return;
-
-        StartCoroutine(ReloadWeapon());
-    }
-
-    IEnumerator ReloadWeapon()
-    {
-        isReloading = true;
-
-        if (audioSource && weaponInventory.CurrentWeapon.reloadSound)
-            audioSource.PlayOneShot(weaponInventory.CurrentWeapon.reloadSound);
-
-        yield return new WaitForSeconds(weaponInventory.CurrentWeapon.cooldown);
-
-        weaponInventory.CurrentWeapon.currentAmmo = weaponInventory.CurrentWeapon.maxAmmo;
-        weaponInventory.UpdateInventoryUI();
-        isReloading = false;
-    }
 }
+

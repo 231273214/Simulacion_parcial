@@ -35,6 +35,9 @@ public class ZombieAI : MonoBehaviour
     public float minSoundDelay = 3f;
     public float maxSoundDelay = 8f;
 
+    private float baseSpeed = 2f;
+    private float nightMultiplier = 1.8f;
+
     private AudioSource audioSource;
     private float soundTimer;
     private float nextSoundTime;
@@ -61,6 +64,13 @@ public class ZombieAI : MonoBehaviour
 
     void Update()
     {
+
+        float speed = baseSpeed;
+
+        if (DayNightCycle.Instance != null && DayNightCycle.Instance.IsNight())
+        {
+            speed *= nightMultiplier;
+        }
         // No hacer nada si está muerto
         if (zombieHealth != null && zombieHealth.isDead)
         {

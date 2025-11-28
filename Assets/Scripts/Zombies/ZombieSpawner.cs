@@ -12,7 +12,10 @@ public class ZombieSpawner : MonoBehaviour
 
     [Header("Zona de Spawn")]
     public bool useSpawnZone = true;
-    public Collider2D spawnZoneCollider; 
+    public Collider2D spawnZoneCollider;
+
+    [HideInInspector] public bool globalSpawningEnabled = true;
+
 
     private List<GameObject> activeZombies = new List<GameObject>();
     private Transform player;
@@ -31,10 +34,12 @@ public class ZombieSpawner : MonoBehaviour
 
     void Update()
     {
-        
+        if (!globalSpawningEnabled)
+            return; 
+
+
         activeZombies.RemoveAll(zombie => zombie == null);
 
-        
         if (activeZombies.Count < maxZombies)
         {
             spawnTimer += Time.deltaTime;
@@ -206,4 +211,13 @@ public class ZombieSpawner : MonoBehaviour
     {
         enabled = false;
     }
+
+    public void SetGlobalSpawning(bool enabled)
+    {
+        globalSpawningEnabled = enabled;
+
+        if (!enabled)
+            ClearAllZombies();
+    }
+
 }
